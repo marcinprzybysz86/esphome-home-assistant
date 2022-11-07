@@ -1,0 +1,102 @@
+### 8266 config for WS2812B or XRING from Wemos with physical button that changes light effects ###
+### CHANGE <<>> TO YOUR OWN VALUES ###
+esphome:
+  name: xring1
+
+globals:
+   - id: actual_effect
+     type: int
+     restore_value: no
+     initial_value: '0'
+
+esp8266:
+  board: esp01_1m
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+  password: <<>>
+
+wifi:
+  ssid: <<>>
+  password: <<>>
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Xring1 Fallback Hotspot"
+    password: <<>>
+
+captive_portal:
+# Example configuration entry
+light:
+  - platform: neopixelbus
+    effects:
+    - addressable_rainbow:
+        speed: 2
+    - addressable_color_wipe:
+        add_led_interval: 500ms
+    - addressable_scan:
+        move_interval: 200ms
+    - addressable_twinkle:
+          twinkle_probability: 5%
+          progress_interval: 8ms
+    - addressable_random_twinkle:
+    - addressable_fireworks:
+          update_interval: 32ms
+          spark_probability: 10%
+          use_random_color: false
+          fade_out_rate: 120
+    - addressable_flicker:
+
+    type: RGB
+    variant: WS2812
+    pin: GPIO4
+    num_leds: 12
+    name: "XRING 1"
+    id: "xring1"
+
+binary_sensor:
+  - platform: gpio
+    name: "effects"  # push button for scrolling thru the pre-configured effects with each press
+    # the following is description of the desired outcome
+    pin:
+      number: GPIO2
+      mode: INPUT_PULLUP
+      inverted: True
+    on_click:
+       - lambda: |- 
+              auto call = id(xring1).turn_on();
+
+              if (id(actual_effect) == 0) 
+                 call.set_effect("None");
+              if (id(actual_effect) == 1)
+                 call.set_effect("Rainbow");
+              if (id(actual_effect) == 2)
+                 call.set_effect("Color Wipe");
+              if (id(actual_effect) == 3)
+                 call.set_effect("Scan");
+              if (id(actual_effect) == 4)
+                 call.set_effect("Twinkle");
+              if (id(actual_effect) == 5)
+                 call.set_effect("Fireworks");
+              if (id(actual_effect) == 6)
+                call.set_effect("None");
+                call.set_rgb(0.0,0.0,1.0);
+              if (id(actual_effect) == 7)
+                call.set_rgb(1.0,0.0,0.0);
+              if (id(actual_effect) == 8)
+                call.set_rgb(0.0,1.0,0.0);
+              if (id(actual_effect) == 9)
+                id(xring1).turn_off(); 
+              if (id(actual_effect) == 10)
+                call.set_rgb(0.4,0.4,0.4);
+              if (id(actual_effect) < 10) // COUNTER LIMIT 
+                  id(actual_effect) += 1;
+              else
+                 id(actual_effect) = 0; // SET EFFECT TO NONE AFTER RESET
+              call.perform();
+
